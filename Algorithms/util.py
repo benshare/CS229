@@ -49,3 +49,30 @@ def loadDataInBuckets(data_file, buckets=[2, 3, 4, 5]):
 
 	f.close()
 	return inputs, labels
+
+def loadDataAsTokens(data_file):
+	f = open(data_file, 'r')
+	m = int(f.readline())
+
+	recipe_list = []
+	for recipe in range(m):
+		cur = f.readline()
+		as_dict = json.loads(cur)
+		recipe_list.append(as_dict)
+
+		cur = f.readline()
+
+	all_ingredients = set()
+	for recipe in recipe_list:
+		all_ingredients.update(recipe)
+	ingredient_list = list(all_ingredients)
+	n = len(ingredient_list)
+
+	inputs = np.zeros((m, n))
+
+	for recipe in range(m):
+		as_freq_vec = dictToFreqVec(recipe_list[recipe], ingredient_list)
+		inputs[recipe, :] = as_freq_vec
+
+	f.close()
+	return inputs, ingredient_list
