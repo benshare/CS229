@@ -7,7 +7,7 @@ from parseIngredients import IngredientParser
 if __name__ == "__main__":
     # Read data
     data = None
-    filename = 'test.json'
+    filename = 'Brownies.json'
     with open(filename) as data_file:
         data = json.load(data_file)
 

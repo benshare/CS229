@@ -1,5 +1,6 @@
 import json  # Reading data
 import nltk  # Stemming plurals
+import string
 
 class IngredientParser():
 
@@ -18,6 +19,10 @@ class IngredientParser():
             'quart': 32,
             'liter': 34,
             'gallon': 128,
+            'pinch': 1./8,  # from rigorous measurements
+            'dash': 1./4,
+            'drop': 0.0016907,
+            'packet': 1./3,
             'ounce': 1 * weightToVol,
             'pound': 16 * weightToVol,
             'gram': 0.035274 * weightToVol,
@@ -27,7 +32,18 @@ class IngredientParser():
         self.lemma = nltk.wordnet.WordNetLemmatizer()
 
         # self.foods = ['sugar', 'shortening', 'eggs', 'bananas', 'caramel sauce', 'fudge sauce', 'milk', 'vanilla', 'flour', 'baking soda', 'baking powder', 'cocoa powder', 'cinnamon', 'nutmeg', 'walnuts', 'salt', 'water', 'yogurt', 'butter', 'egg', 'chocolate chips', 'oil', 'milk', 'brownie mix', 'yeast', 'raisins', 'cloves', 'banana', 'oats', 'zest', 'pecans', 'juice', 'squares', 'flowers', 'applesauce', 'seeds', 'mayonnaise', 'margarine', 'sour cream', 'honey', 'potatoes', 'ginger', 'wheat germ', 'tofu', 'meal', 'allspice', 'chocolate chunks', 'dates', 'vinegar', 'coconut', 'starch', 'cardamom', 'beer', 'root', 'baking powder', 'walnuts', 'syrup', 'strawberries', 'blueberries', 'apple', 'papaya', 'quarters', 'vanilla', 'drained', 'diced', 'bran', 'gum', 'rum', 'toasted', 'flakes)', 'cherries', 'cubed', 'garnish', 'cereal', 'cranberries', 'separated', 'pieces', 'C)', 'nuts', 'cheese', 'tea', 'carrots', 'Delight®)', 'granules', 'seed', 'Splenda®)', 'Blend', 'zucchini', 'link)', 'thawed', 'molasses', 'puree', 'spice', 'Pam®)', 'Honey®)', 'drippings', 'bacon', 'cornmeal', 'lengthwise', 'whisked', 'Granulated)', 'Light)', 'Blend)', 'substitute', 'Arthur®)', 'Mixture)', 'peanuts', 'flavoring', 'Topping', 'pureed', 'Mill®)', 'Icing:', 'cognac', 'pumpkin', 'demerara', 'Oil', 'Extract', 'peeled', 'Applesauce', 'topping']
-        self.foods = ['sugar', 'flour', 'eggs', 'chocolate', 'water', 'salt', 'butter', 'vanilla', 'oil', 'baking soda', 'baking powder']
+        # self.foods = ['sugar', 'flour', 'eggs', 'chocolate', 'water', 'salt', 'butter', 'vanilla', 'oil', 'baking soda', 'baking powder']
+        self.foods = ["raspberr", "bourbon", "pecan", "strawberr", "hazelnut", "macadamia nut", "lime", "zucchini", "bacon", "soda", "apple", "coconut", "coffee", "cocoa", "sweet potato", "cake mix", "lentils", "lemon juice", "corn syrup", "maple syrup", "peppermint", "vanilla", "vanilla pudding mix", "tea", "shortening", "yogurt", "cherr", "water", "salad oil", "cooking oil", "canola oil", "olive oil", "flaxseed oil", "almond extract", "cornstarch", "cashew", "pumpkin pie spice", "coffee gran", "avocado", "raisin", "applesauce", "yellow cake mix", "honey", "rum", "milk", "almond milk", "condensed milk", "soy milk", "evaporated milk", "sour milk", "coconut milk", "ice cream", "protein powder", "heavy cream", "sour cream", "ice cream cone", "whipping cream", "liqueur", "cream of tartar", "caramel", "chocolate frosting", "nesquik", "nutella", "oreo", "sweet chocolate", "bittersweet chocolate", "german sweet chocolate", "toffee", "chocolate cake mix", "chocolate pudding mix", "white chocolate", "dark chocolate", "baking chocolate", "milk chocolate", "unsweetened chocolate", "cream cheese", "margarine", "vegan margarine", "chocolate chip", "bittersweet chocolate chip", "dark chocolate chip", "vegan chocolate chip", "chocolate malt powder", "thin mints", "white chocolate chip", "milk chocolate chip", "bitterswet chocolate", "butter", "butter flavored shortening", "butterscotch-flavored chips", "almond butter", "butterfinger", "buttermilk", "egg", "egg replacer", "egg yolk", "flour", "pastry flour", "spelt flour", "cooking spray", "self-rising flour", "sorghum flour", "teff flour", "tapioca flour", "almond flour", "wheat flour", "coconut flour", "rice flour", "barley flour", "potato flour", "cake flour", "sugar", "superfine sugar", "instant pudding", "german chocolate cake mix", "banana", "vodka", "egg substitute", "coconut oil", "vegetable oil", "marshmallow", "cinnamon", "food coloring", "chocolate syrup", "walnut", "salt", "peanut", "almond", "coarse salt", "black bean", "salted cashew", "sea salt", "salted butter", "unsalted butter", "stevia", "rice cereal", "cocoa powder", "artificial sweetener", "baking soda", "butterscotch chip", "carob powder", "egg white", "irish stout beer", "cake meal", "gluten-free all purpose baking flour", "butter or margarine", "baking powder", "peppermint extract", "skim milk", "brownie mix", "unsalted butter", "powedered peanut butter", "peanut butter", "confectioners' sugar", "granulated sugar", "brown sugar", "light brown sugar", "coconut sugar"]
+        self.foods = sorted(self.foods, key=len)
+        self.foods.reverse();
+        self.foods = self.removePunctuation(self.foods)
+
+    def removePunctuation(self, strings):
+        exclude = set(string.punctuation+' ')
+        out = []
+        for s in strings:
+            out.append(''.join(ch for ch in s if ch not in exclude))
+        return out
 
     def parseFraction(self, token):
         tokens = token.split('/')
@@ -52,11 +68,15 @@ class IngredientParser():
             return n
         return n
 
-    def getUnit(self, tokens):
-        for token in tokens:
-            matches = [u for u in self.units if u in token]
-            if (len(matches) > 0):
-                return matches[0]
+    def getUnit(self, ingredient):
+        # for token in tokens:
+        #     matches = [u for u in self.units if u in token]
+        #     if (len(matches) > 0):
+        #         return matches[0]
+        # return ''
+        for unit in self.units:
+            if unit in ingredient:
+                return unit
         return ''
 
     def getUnitlessQuantity(self, quantity, unit):
@@ -66,18 +86,22 @@ class IngredientParser():
             return quantity
 
     # Determine what food is present in an ingredient
-    def getFood(self, tokens):
-        for token in tokens:
-            matches = [f for f in self.foods if self.lemma.lemmatize(f) in self.lemma.lemmatize(token)]
-            if (len(matches) > 0):
-                return matches[0]
+    def getFood(self, ingredient):
+        for food in self.foods:
+            if food in self.removePunctuation([ingredient])[0]:
+                return food
         return ''
+        # for token in tokens:
+        #     matches = [f for f in self.foods if self.lemma.lemmatize(f) in self.lemma.lemmatize(token)]
+        #     if (len(matches) > 0):
+        #         return matches[0]
+        # return ''
 
     # Parse single ingredient token
     def parseIngredient(self, ingredient):
         tokens = ingredient.split(' ')
-        amount = self.getUnitlessQuantity(self.getQuantity(tokens), self.getUnit(tokens))
-        food = self.getFood(tokens)
+        amount = self.getUnitlessQuantity(self.getQuantity(tokens), self.getUnit(ingredient))
+        food = self.getFood(ingredient)
         if food == '' or amount  <= 0:
             return []
         else:
