@@ -49,7 +49,7 @@ def makePlot(xs, ys, title, filename):
 
 if __name__ == "__main__":
 	breakups = range(1,9)
-	splits = [0.5, 0.6, 0.7, 0.8, 0.9]
+	splits = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
 	for train_test_split in splits:
 		errors = []
 		for num_categories in breakups:
@@ -63,10 +63,15 @@ if __name__ == "__main__":
 				test_inputs, test_labels = loadData("../data/test_data.txt", buckets)
 
 			model = train(train_inputs, train_labels, num_categories)
-			predictions = test(test_inputs, model, num_categories)
+			if train_test_split == 1:
+				predictions = test(train_inputs, model, num_categories)
+				error = evaluate(predictions, train_labels)
+			else:
+				predictions = test(test_inputs, model, num_categories)
+				error = evaluate(predictions, test_labels)
 
-			error = evaluate(predictions, test_labels)
 			errors.append(error)
-		makePlot(breakups, errors, "Error vs. bucket number", path_prefix + "nb_error_%dsplit" %int(10 * train_test_split))
-
-
+		if train_test_split == 1:
+			makePlot(breakups, errors, "Error vs. bucket number", path_prefix + "nb_error_train_on_train")
+		else:
+			makePlot(breakups, errors, "Error vs. bucket number", path_prefix + "nb_error_%dsplit" %int(10 * train_test_split))
