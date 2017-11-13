@@ -20,7 +20,7 @@ def bucketer(original, buckets):
 		bucket_ind += 1
 	return bucket_ind
 
-def loadDataInBuckets(data_file, buckets=[2, 3, 4, 5]):
+def loadTxtAsBuckets(data_file, buckets=[2, 3, 4, 5]):
 	f = open(data_file, 'r')
 	m = int(f.readline())
 
@@ -54,7 +54,7 @@ def loadDataInBuckets(data_file, buckets=[2, 3, 4, 5]):
 	f.close()
 	return inputs, labels
 
-def loadDataAsTokens(data_file):
+def loadTxtAsTokens(data_file):
 	f = open(data_file, 'r')
 	m = int(f.readline())
 
@@ -81,7 +81,7 @@ def loadDataAsTokens(data_file):
 	f.close()
 	return inputs, ingredient_list
 
-def loadDataFromJSON(file_name, split, buckets=[2, 3, 4, 5]):
+def loadJSONAsBuckets(file_name, split, buckets=[2, 3, 4, 5]):
 	f = open("../data/_Brownies.json", 'r')
 	obj = json.load(f)
 	recipe_list = obj["_ingredients"]
@@ -115,3 +115,26 @@ def loadDataFromJSON(file_name, split, buckets=[2, 3, 4, 5]):
 
 	f.close()
 	return input_train, labels_train, input_test, labels_test
+
+
+def loadJSONAsTokens(file_name):
+	f = open("../data/_Brownies.json", 'r')
+	obj = json.load(f)
+	recipe_list = obj["_ingredients"]
+	recipe_list = [{ing[1]: ing[0] for ing in recipe} for recipe in recipe_list]
+	m = len(recipe_list)
+
+	all_ingredients = set()
+	for recipe in recipe_list:
+		all_ingredients.update(recipe)
+	ingredient_list = list(all_ingredients)
+	n = len(ingredient_list)
+
+	inputs = np.zeros((m, n))
+
+	for recipe in range(m):
+		as_freq_vec = dictToFreqVec(recipe_list[recipe], ingredient_list)
+		inputs[recipe, :] = as_freq_vec
+
+	f.close()
+	return inputs, ingredient_list

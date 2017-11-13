@@ -1,10 +1,11 @@
 import numpy as np
-from util import dictToFreqVec as dictToFreqVec, loadDataInBuckets as loadData, loadDataFromJSON as loadJSON
+from util import loadTxtAsBuckets as loadTxt, loadJSONAsBuckets as loadJSON
 from matplotlib import pyplot as plt
 
 train_test_split = 0.7
-input_type = "JSON"
-path_prefix = "../results/naive_bayes/"
+result_path_prefix = "../results/naive_bayes/"
+input_file = "../data/_Brownies.json"
+# input_file = "../data/train_data.txt"
 
 # Trains a naive Bayes model on the given input data (matrix)
 # and labels (category). num_categories is needed to know how
@@ -56,11 +57,11 @@ if __name__ == "__main__":
 			bucket_width = 4.0 / num_categories
 			buckets = [1 + bucket_width * (i + 1) for i in range(num_categories - 1)]
 			buckets.append(5)
-			if input_type == "JSON":
-				train_inputs, train_labels, test_inputs, test_labels = loadJSON("../data/_Brownies.json", train_test_split, buckets)
-			elif input_type == "txt":
-				train_inputs, train_labels = loadData("../data/train_data.txt", buckets)
-				test_inputs, test_labels = loadData("../data/test_data.txt", buckets)
+			if ".txt" in input_file:
+				train_inputs, train_labels = loadTxt(input_file, buckets)
+				test_inputs, test_labels = loadTxt(input_file.replace("train", "test"), buckets)
+			elif ".json" in input_file:
+				train_inputs, train_labels, test_inputs, test_labels = loadJSON(input_file, train_test_split, buckets)
 
 			model = train(train_inputs, train_labels, num_categories)
 			if train_test_split == 1:
@@ -72,6 +73,6 @@ if __name__ == "__main__":
 
 			errors.append(error)
 		if train_test_split == 1:
-			makePlot(breakups, errors, "Error vs. bucket number", path_prefix + "nb_error_train_on_train")
+			makePlot(breakups, errors, "Error vs. bucket number", result_path_prefix + "nb_error_train_on_train")
 		else:
-			makePlot(breakups, errors, "Error vs. bucket number", path_prefix + "nb_error_%dsplit" %int(10 * train_test_split))
+			makePlot(breakups, errors, "Error vs. bucket number", result_path_prefix + "nb_error_%dsplit" %int(10 * train_test_split))
