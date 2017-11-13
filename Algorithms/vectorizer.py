@@ -5,6 +5,7 @@ dim = 4
 max_iters = 30
 step_size = 1
 zero_center = True
+path_prefix = "../results/vectors/"
 
 def train(matrix):
 	m, n = matrix.shape
@@ -33,9 +34,9 @@ if __name__ == "__main__":
 	train_inputs, tokens = loadData("../data/w2v_data.txt")
 
 	embeddings = train(train_inputs)
-	np.savetxt("embeddings_%d" %dim, embeddings)
+	np.savetxt(path_prefix + "embeddings_%d" %dim, embeddings)
 
-	f = open("tokens_%d" %dim, 'w+')
+	f = open(path_prefix + "tokens_%d" %dim, 'w+')
 	f.write(str(tokens))
 	f.close()
 

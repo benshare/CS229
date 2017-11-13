@@ -14,6 +14,12 @@ def dictToFreqVec(d, header):
 			freq_vec[:, i] = d[ingredient]
 	return freq_vec
 
+def bucketer(original, buckets):
+	bucket_ind = 0
+	while buckets[bucket_ind] < original:
+		bucket_ind += 1
+	return bucket_ind
+
 def loadDataInBuckets(data_file, buckets=[2, 3, 4, 5]):
 	f = open(data_file, 'r')
 	m = int(f.readline())
@@ -30,6 +36,7 @@ def loadDataInBuckets(data_file, buckets=[2, 3, 4, 5]):
 
 	all_ingredients = set()
 	for recipe in recipe_list:
+		print recipe
 		all_ingredients.update(recipe)
 	ingredient_list = list(all_ingredients)
 	n = len(ingredient_list)
@@ -42,10 +49,7 @@ def loadDataInBuckets(data_file, buckets=[2, 3, 4, 5]):
 		inputs[recipe, :] = as_freq_vec
 
 		cur_label = label_list[recipe]
-		bucket_ind = 0
-		while buckets[bucket_ind] < cur_label:
-			bucket_ind += 1
-		labels[recipe] = bucket_ind
+		labels[recipe] = bucketer(cur_label, buckets)
 
 	f.close()
 	return inputs, labels
@@ -76,3 +80,38 @@ def loadDataAsTokens(data_file):
 
 	f.close()
 	return inputs, ingredient_list
+
+def loadDataFromJSON(file_name, split, buckets=[2, 3, 4, 5]):
+	f = open("../data/_Brownies.json", 'r')
+	obj = json.load(f)
+	recipe_list = obj["_ingredients"]
+	recipe_list = [{ing[1]: ing[0] for ing in recipe} for recipe in recipe_list]
+	m = len(recipe_list)
+
+	all_ingredients = set()
+	for recipe in recipe_list:
+		all_ingredients.update(recipe)
+	ingredient_list = list(all_ingredients)
+	n = len(ingredient_list)
+	
+	label_list = obj["rating"]
+	label_list = [bucketer(l, buckets) for l in label_list]
+
+	cutoff = int(m * split)
+
+	input_train = np.zeros((cutoff, n))
+	labels_train = np.zeros((cutoff,))
+	input_test = np.zeros((m - cutoff, n))
+	labels_test = np.zeros((m - cutoff,))
+
+	for recipe in range(m):
+		as_freq_vec = dictToFreqVec(recipe_list[recipe], ingredient_list)
+		if recipe < cutoff:
+			input_train[recipe, :] = as_freq_vec
+			labels_train[recipe] = label_list[recipe]
+		else:
+			input_test[recipe - cutoff, :] = as_freq_vec
+			labels_test[recipe - cutoff] = label_list[recipe]
+
+	f.close()
+	return input_train, labels_train, input_test, labels_test
