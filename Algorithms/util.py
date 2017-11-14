@@ -81,7 +81,7 @@ def loadTxtAsTokens(data_file):
 	f.close()
 	return inputs, ingredient_list
 
-def loadJSONAsBuckets(file_name, split, buckets=[2, 3, 4, 5]):
+def loadJSONAsBuckets(file_name, split, buckets=[2, 3, 4, 5], get_names=False):
 	f = open("../data/_Brownies.json", 'r')
 	obj = json.load(f)
 	recipe_list = obj["_ingredients"]
@@ -114,7 +114,9 @@ def loadJSONAsBuckets(file_name, split, buckets=[2, 3, 4, 5]):
 			labels_test[recipe - cutoff] = label_list[recipe]
 
 	f.close()
-	return input_train, labels_train, input_test, labels_test
+	if not get_names:
+		return input_train, labels_train, input_test, labels_test
+	return input_train, labels_train, ingredient_list
 
 
 def loadJSONAsTokens(file_name):

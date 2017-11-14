@@ -3,8 +3,8 @@ from util import loadTxtAsTokens as loadTxt, loadJSONAsTokens as loadJSON
 import os.path
 from random import randrange
 
-dim = 100
-max_iters = 1000
+dim = 500
+max_iters = 10000
 step_size = 1
 zero_center = True
 dimension_limit = 100
@@ -24,7 +24,8 @@ def train(matrix):
 	out_embeddings = np.random.normal(0, 1, (n, dim))
 
 	for iteration in range(max_iters):
-		if iteration % 10 == 0:
+		interval = 10**(np.log10(max_iters) - 1)
+		if iteration % interval == 0:
 			print "Iteration %d" %iteration
 		in_update = np.dot(cooccurences, out_embeddings) / step_size
 		out_embeddings = np.dot(cooccurences, in_embeddings) / step_size
@@ -86,7 +87,7 @@ def getKNeighbors(matrix, chosen_index, k, best=True):
 			indices[i] += 1
 	return indices
 
-def getKSubstituteSuggestions(ingredient, embeddings, tokens, k):
+def getKBestSubstitutes(ingredient, embeddings, tokens, k):
 	chosen_index = tokens.index(ingredient)
 	found = getKNeighbors(embeddings, chosen_index, k)
 	return [tokens[idx] for idx in found]
@@ -112,8 +113,8 @@ if __name__ == "__main__":
 	# writeEmbeddingFiles()
 
 	embeddings, tokens = loadEmbeddingFiles(input_file, dim)
-	print getKSubstituteSuggestions("whitechocolate", embeddings, tokens, 5)
-	print getKWorstSubstitutes("whitechocolate", embeddings, tokens, 5)
+	print getKBestSubstitutes("salt", embeddings, tokens, 10)
+	print getKWorstSubstitutes("salt", embeddings, tokens, 10)
 
 	# m = 12
 	# d = 10

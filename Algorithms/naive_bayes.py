@@ -48,7 +48,7 @@ def makePlot(xs, ys, title, filename):
 	plt.savefig(filename)
 	plt.figure()
 
-if __name__ == "__main__":
+def makeErrorPlots():
 	breakups = range(1,9)
 	splits = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
 	for train_test_split in splits:
@@ -76,3 +76,46 @@ if __name__ == "__main__":
 			makePlot(breakups, errors, "Error vs. bucket number", result_path_prefix + "nb_error_train_on_train")
 		else:
 			makePlot(breakups, errors, "Error vs. bucket number", result_path_prefix + "nb_error_%dsplit" %int(10 * train_test_split))
+
+def getIngredientScores(num_categories):
+	bucket_width = 4.0 / num_categories
+	buckets = [1 + bucket_width * (i + 1) for i in range(num_categories - 1)]
+	buckets.append(5)
+	if ".txt" in input_file:
+		train_inputs, train_labels = loadTxt(input_file, buckets)
+	elif ".json" in input_file:
+		train_inputs, train_labels, ingredient_list = loadJSON(input_file, 1, buckets=buckets, get_names=True)
+
+	model = train(train_inputs, train_labels, num_categories)
+	dists = model["phis"]
+	dists /= np.reshape(np.sum(dists, axis=1), (dists.shape[0], 1))
+	scores = np.dot(dists, np.transpose(np.array(buckets) - bucket_width / 2))
+
+	ingredient_scores = [(ingredient_list[idx], scores[idx]) for idx in range(len(ingredient_list))]
+	
+	def higherScore(pair1, pair2):
+		diff = pair1[1] - pair2[1]
+		if diff == 0.0:
+			return 1
+		return int(diff / np.abs(diff))
+		
+	ingredient_scores.sort(higherScore)
+	return ingredient_scores
+
+def getOutliers(scores, n):
+	print "%d worst ingredients:" %n
+	for pair in scores[:n]:
+		print "%s (%.2f)" %(pair[0], pair[1])
+
+	print "\n%d best ingredients:" %n
+	for pair in scores[-n:]:
+		print "%s (%.2f)" %(pair[0], pair[1])
+
+if __name__ == "__main__":
+	# makeErrorPlots()
+	scores = getIngredientScores(4)
+	getOutliers(scores, 5)
+
+
+
+
