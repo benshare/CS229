@@ -1,6 +1,7 @@
 import numpy as np
 from util import loadTxtAsTokens as loadTxt, loadJSONAsTokens as loadJSON
 import os.path
+from random import randrange
 
 dim = 100
 max_iters = 1000
@@ -39,7 +40,7 @@ def train(matrix):
 
 	return in_embeddings
 
-if __name__ == "__main__":
+def writeEmbeddingFiles():
 	if ".txt" in input_file:
 		train_inputs, tokens = loadTxt(input_path_prefix + input_file)
 	elif ".json" in input_file:
@@ -55,4 +56,69 @@ if __name__ == "__main__":
 		f = open(fn, 'w+')
 		f.write(str(tokens))
 		f.close()
+
+def loadEmbeddingFiles(input_file, dimension):
+	stem = input_file[:input_file.find('.')]
+	f = open(result_path_prefix + stem + "_embeddings_" + str(dimension))
+	embeddings = np.loadtxt(f)
+	f.close()
+
+	f = open(result_path_prefix + stem + "_tokens")
+	tokens = eval(f.readline())
+	f.close()
+	return embeddings, tokens
+
+def getKNeighbors(matrix, chosen_index, k, best=True):
+	given = matrix[chosen_index][:]
+	other_vecs = np.zeros((matrix.shape[0]-1, matrix.shape[1]))
+	other_vecs[:chosen_index][:] = matrix[:chosen_index][:]
+	other_vecs[chosen_index:][:] = matrix[chosen_index + 1:][:]
+
+	distance_vectors = other_vecs - given
+	distances = np.linalg.norm(distance_vectors, axis=1)
+
+	if best:
+		indices = np.argpartition(distances, k-1)[:k]
+	else:
+		indices = np.argpartition(distances, -k)[-k:]
+	for i in range(len(indices)):
+		if indices[i] >= chosen_index:
+			indices[i] += 1
+	return indices
+
+def getKSubstituteSuggestions(ingredient, embeddings, tokens, k):
+	chosen_index = tokens.index(ingredient)
+	found = getKNeighbors(embeddings, chosen_index, k)
+	return [tokens[idx] for idx in found]
+
+def getKWorstSubstitutes(ingredient, embeddings, tokens, k):
+	chosen_index = tokens.index(ingredient)
+	found = getKNeighbors(embeddings, chosen_index, k, best=False)
+	return [tokens[idx] for idx in found]
+
+def getTestEmbeddings(m, d):
+	embeddings = np.zeros((m, d))
+	for i in range(m / 4):
+		base = np.array([randrange(10) for _ in range(d)])
+		diff = np.zeros((1, d))
+		diff[:][0] = 1
+		embeddings[i*4][:] = base
+		embeddings[i*4+1][:] = base + diff
+		embeddings[i*4+2][:] = base + diff * 3
+		embeddings[i*4+3][:] = base + diff * 6
+	return embeddings, [str(i) for i in range(m)]
+
+if __name__ == "__main__":
+	# writeEmbeddingFiles()
+
+	embeddings, tokens = loadEmbeddingFiles(input_file, dim)
+	print getKSubstituteSuggestions("whitechocolate", embeddings, tokens, 5)
+	print getKWorstSubstitutes("whitechocolate", embeddings, tokens, 5)
+
+	# m = 12
+	# d = 10
+	# embeddings, tokens = getTestEmbeddings(m, d)
+	# for idx in range(m):
+	# 	print "neighbor for %d:" %idx
+	# 	print getKSubstituteSuggestions(str(idx), embeddings, tokens, 1)
 
