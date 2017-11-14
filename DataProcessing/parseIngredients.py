@@ -29,8 +29,6 @@ class IngredientParser():
         }
         self.units = self.unitConversions.keys()
 
-        self.lemma = nltk.wordnet.WordNetLemmatizer()
-
         # self.foods = ['sugar', 'shortening', 'eggs', 'bananas', 'caramel sauce', 'fudge sauce', 'milk', 'vanilla', 'flour', 'baking soda', 'baking powder', 'cocoa powder', 'cinnamon', 'nutmeg', 'walnuts', 'salt', 'water', 'yogurt', 'butter', 'egg', 'chocolate chips', 'oil', 'milk', 'brownie mix', 'yeast', 'raisins', 'cloves', 'banana', 'oats', 'zest', 'pecans', 'juice', 'squares', 'flowers', 'applesauce', 'seeds', 'mayonnaise', 'margarine', 'sour cream', 'honey', 'potatoes', 'ginger', 'wheat germ', 'tofu', 'meal', 'allspice', 'chocolate chunks', 'dates', 'vinegar', 'coconut', 'starch', 'cardamom', 'beer', 'root', 'baking powder', 'walnuts', 'syrup', 'strawberries', 'blueberries', 'apple', 'papaya', 'quarters', 'vanilla', 'drained', 'diced', 'bran', 'gum', 'rum', 'toasted', 'flakes)', 'cherries', 'cubed', 'garnish', 'cereal', 'cranberries', 'separated', 'pieces', 'C)', 'nuts', 'cheese', 'tea', 'carrots', 'Delight®)', 'granules', 'seed', 'Splenda®)', 'Blend', 'zucchini', 'link)', 'thawed', 'molasses', 'puree', 'spice', 'Pam®)', 'Honey®)', 'drippings', 'bacon', 'cornmeal', 'lengthwise', 'whisked', 'Granulated)', 'Light)', 'Blend)', 'substitute', 'Arthur®)', 'Mixture)', 'peanuts', 'flavoring', 'Topping', 'pureed', 'Mill®)', 'Icing:', 'cognac', 'pumpkin', 'demerara', 'Oil', 'Extract', 'peeled', 'Applesauce', 'topping']
         # self.foods = ['sugar', 'flour', 'eggs', 'chocolate', 'water', 'salt', 'butter', 'vanilla', 'oil', 'baking soda', 'baking powder']
         self.foods = ["raspberr", "bourbon", "pecan", "strawberr", "hazelnut", "macadamia nut", "lime", "zucchini", "bacon", "soda", "apple", "coconut", "coffee", "cocoa", "sweet potato", "cake mix", "lentils", "lemon juice", "corn syrup", "maple syrup", "peppermint", "vanilla", "vanilla pudding mix", "tea", "shortening", "yogurt", "cherr", "water", "salad oil", "cooking oil", "canola oil", "olive oil", "flaxseed oil", "almond extract", "cornstarch", "cashew", "pumpkin pie spice", "coffee gran", "avocado", "raisin", "applesauce", "yellow cake mix", "honey", "rum", "milk", "almond milk", "condensed milk", "soy milk", "evaporated milk", "sour milk", "coconut milk", "ice cream", "protein powder", "heavy cream", "sour cream", "ice cream cone", "whipping cream", "liqueur", "cream of tartar", "caramel", "chocolate frosting", "nesquik", "nutella", "oreo", "sweet chocolate", "bittersweet chocolate", "german sweet chocolate", "toffee", "chocolate cake mix", "chocolate pudding mix", "white chocolate", "dark chocolate", "baking chocolate", "milk chocolate", "unsweetened chocolate", "cream cheese", "margarine", "vegan margarine", "chocolate chip", "bittersweet chocolate chip", "dark chocolate chip", "vegan chocolate chip", "chocolate malt powder", "thin mints", "white chocolate chip", "milk chocolate chip", "bitterswet chocolate", "butter", "butter flavored shortening", "butterscotch-flavored chips", "almond butter", "butterfinger", "buttermilk", "egg", "egg replacer", "egg yolk", "flour", "pastry flour", "spelt flour", "cooking spray", "self-rising flour", "sorghum flour", "teff flour", "tapioca flour", "almond flour", "wheat flour", "coconut flour", "rice flour", "barley flour", "potato flour", "cake flour", "sugar", "superfine sugar", "instant pudding", "german chocolate cake mix", "banana", "vodka", "egg substitute", "coconut oil", "vegetable oil", "marshmallow", "cinnamon", "food coloring", "chocolate syrup", "walnut", "salt", "peanut", "almond", "coarse salt", "black bean", "salted cashew", "sea salt", "salted butter", "unsalted butter", "stevia", "rice cereal", "cocoa powder", "artificial sweetener", "baking soda", "butterscotch chip", "carob powder", "egg white", "irish stout beer", "cake meal", "gluten-free all purpose baking flour", "butter or margarine", "baking powder", "peppermint extract", "skim milk", "brownie mix", "unsalted butter", "powedered peanut butter", "peanut butter", "confectioners' sugar", "granulated sugar", "brown sugar", "light brown sugar", "coconut sugar"]
@@ -69,11 +67,6 @@ class IngredientParser():
         return n
 
     def getUnit(self, ingredient):
-        # for token in tokens:
-        #     matches = [u for u in self.units if u in token]
-        #     if (len(matches) > 0):
-        #         return matches[0]
-        # return ''
         for unit in self.units:
             if unit in ingredient:
                 return unit
@@ -91,11 +84,6 @@ class IngredientParser():
             if food in self.removePunctuation([ingredient])[0]:
                 return food
         return ''
-        # for token in tokens:
-        #     matches = [f for f in self.foods if self.lemma.lemmatize(f) in self.lemma.lemmatize(token)]
-        #     if (len(matches) > 0):
-        #         return matches[0]
-        # return ''
 
     # Parse single ingredient token
     def parseIngredient(self, ingredient):
@@ -106,7 +94,7 @@ class IngredientParser():
             return []
         else:
             return [
-                self.getUnitlessQuantity(self.getQuantity(tokens), self.getUnit(tokens)),
+                self.getUnitlessQuantity(self.getQuantity(tokens), self.getUnit(ingredient)),
                 self.getFood(tokens)
             ]
 
@@ -136,7 +124,7 @@ class IngredientParser():
 if __name__ == "__main__":
     # Read data
     data = None
-    filename = 'Brownies.json'
+    filename = 'test.json'
     with open(filename) as data_file:
         data = json.load(data_file)
 
