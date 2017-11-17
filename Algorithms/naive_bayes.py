@@ -37,13 +37,29 @@ def test(matrix, state, num_categories):
 	posts = np.dot(matrix, np.log(phis)) + np.log(priors)
 	predictions = np.argmax(posts, axis=1)
 
-	return predictions
+	diff = np.zeros(posts.shape)
+	for r in range(len(predictions)):
+		diff[r][predictions[r]] = float('-inf')
+	posts += diff
+	second_guesses = np.argmax(posts, axis=1)
+
+	return predictions, second_guesses
 
 def evaluate(output, label):
 	return (output != label).sum() * 1. / len(output)
 
+def evalLenient(output, second_guesses, label):
+	return max(((output != label).sum() + (second_guesses != label).sum() - len(output)) * 1. / len(output), 0)
+
 def makePlot(xs, ys, title, filename):
 	plt.scatter(xs, ys)
+	plt.title(title)
+	plt.savefig(filename)
+	plt.figure()
+
+def makeTwoLinePlot(xs, y1s, y2s, title, filename):
+	plt.scatter(xs, y1s)
+	plt.scatter(xs, y2s)
 	plt.title(title)
 	plt.savefig(filename)
 	plt.figure()
@@ -53,6 +69,7 @@ def makeErrorPlots():
 	splits = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
 	for train_test_split in splits:
 		errors = []
+		lenient_errors = []
 		for num_categories in breakups:
 			bucket_width = 4.0 / num_categories
 			buckets = [1 + bucket_width * (i + 1) for i in range(num_categories - 1)]
@@ -65,17 +82,20 @@ def makeErrorPlots():
 
 			model = train(train_inputs, train_labels, num_categories)
 			if train_test_split == 1:
-				predictions = test(train_inputs, model, num_categories)
+				predictions, second_guesses = test(train_inputs, model, num_categories)
 				error = evaluate(predictions, train_labels)
+				lenient_error = evalLenient(predictions, second_guesses, train_labels)
 			else:
-				predictions = test(test_inputs, model, num_categories)
+				predictions, second_guesses = test(test_inputs, model, num_categories)
 				error = evaluate(predictions, test_labels)
+				lenient_error = evalLenient(predictions, second_guesses, test_labels)
 
 			errors.append(error)
+			lenient_errors.append(lenient_error)
 		if train_test_split == 1:
 			makePlot(breakups, errors, "Error vs. bucket number", result_path_prefix + "nb_error_train_on_train")
 		else:
-			makePlot(breakups, errors, "Error vs. bucket number", result_path_prefix + "nb_error_%dsplit" %int(10 * train_test_split))
+			makeTwoLinePlot(breakups, errors, lenient_errors, "Error vs. bucket number", result_path_prefix + "nb_error_lenient_%dsplit" %int(10 * train_test_split))
 
 def getIngredientScores(num_categories):
 	bucket_width = 4.0 / num_categories
@@ -112,9 +132,9 @@ def getOutliers(scores, n):
 		print "%s (%.2f)" %(pair[0], pair[1])
 
 if __name__ == "__main__":
-	# makeErrorPlots()
-	scores = getIngredientScores(4)
-	getOutliers(scores, 5)
+	makeErrorPlots()
+	# scores = getIngredientScores(4)
+	# getOutliers(scores, 5)
 
 
 
