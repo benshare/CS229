@@ -93,7 +93,7 @@ def makeErrorPlots():
 			errors.append(error)
 			lenient_errors.append(lenient_error)
 		if train_test_split == 1:
-			makePlot(breakups, errors, "Error vs. bucket number", result_path_prefix + "nb_error_train_on_train")
+			makeTwoLinePlot(breakups, errors, lenient_errors, "Error vs. bucket number", result_path_prefix + "nb_error_lenient_train_on_train")
 		else:
 			makeTwoLinePlot(breakups, errors, lenient_errors, "Error vs. bucket number", result_path_prefix + "nb_error_lenient_%dsplit" %int(10 * train_test_split))
 
