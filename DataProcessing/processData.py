@@ -8,6 +8,7 @@ if __name__ == "__main__":
     # Read data
     data = None
     filename = 'Brownies.json'
+    tag = "_Simple_"
     with open(filename) as data_file:
         data = json.load(data_file)
 
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     data_out = RecipeFilterer(data_ing).filterAll()
 
     # Save data
-    jsonFile = open('_' + filename, "w")
+    jsonFile = open(tag + filename, "w")
     jsonFile.truncate()
     jsonFile.write(json.dumps({
             "name": data_out['name'],

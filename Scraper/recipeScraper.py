@@ -46,3 +46,6 @@ class recipeScraper():
 
     def rating_stars(self):
         return float(self.soup.find('meta', {'itemprop': 'ratingValue'})['content'])
+
+    def servings(self):
+        return float(self.soup.find('meta', {'itemprop': 'recipeYield'})['content'])

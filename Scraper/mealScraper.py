@@ -18,7 +18,7 @@ class AllrecipesMealScraper():
 
     def __init__(self, url):
         self.url = url  # URL to a the default category page (should end with something like ...cardslot%201)
-        self.delay = 2  # Seconds between requests
+        self.delay = 1.5  # Seconds between requests
 
     def url(self):
         return self.url
@@ -36,6 +36,7 @@ class AllrecipesMealScraper():
         self.rating = []
         self.numReviews = []
         self.ingredients = []
+        self.servings = []
         self.recipeURLs = set()
         self.count = 0
 
@@ -82,6 +83,7 @@ class AllrecipesMealScraper():
                 "name": self.title,
                 "rating": self.rating,
                 "reviews": self.numReviews,
+                "servings": self.servings,
                 "ingredients": self.ingredients}))
         self.jsonFile.write("\n")
         self.jsonFile.close()
@@ -100,6 +102,7 @@ class AllrecipesMealScraper():
             self.title.append(scrape.title())
             self.rating.append(scrape.rating_stars())
             self.numReviews.append(scrape.review_count())
+            self.servings.append(scrape.servings())
             self.ingredients.append(scrape.ingredients())
 
             self.saveProgress();
@@ -126,9 +129,9 @@ class AllrecipesMealScraper():
 def main():
     # AllrecipesMealScraper('http://allrecipes.com/recipes/343/bread/quick-bread/fruit-bread/banana-bread/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('BananaBread')
     # AllrecipesMealScraper('http://allrecipes.com/recipes/839/desserts/cookies/chocolate-chip-cookies/?internalSource=hub%20nav&referringId=17254&referringContentType=recipe%20hub&referringPosition=5&linkName=hub%20nav%20exposed&clickId=hub%20nav%205').scrape('ChocChipCookies')
-    # AllrecipesMealScraper('http://allrecipes.com/recipes/502/main-dish/pasta/lasagna/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Lasagna')
+    AllrecipesMealScraper('http://allrecipes.com/recipes/502/main-dish/pasta/lasagna/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Lasagna')
     # AllrecipesMealScraper('http://allrecipes.com/recipes/151/breakfast-and-brunch/pancakes/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Pancakes')
-    AllrecipesMealScraper('http://allrecipes.com/recipes/838/desserts/cookies/brownies/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Brownies')
+    # AllrecipesMealScraper('http://allrecipes.com/recipes/838/desserts/cookies/brownies/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Brownies')
 
 
 
