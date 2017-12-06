@@ -7,24 +7,27 @@ from parseIngredients import IngredientParser
 if __name__ == "__main__":
     # Read data
     data = None
-    filename = 'Brownies.json'
-    tag = "_Simple_"
-    with open(filename) as data_file:
+    filename = "Brownies.json"
+    tag = "_"
+    inpath = "Raw Recipes/"
+    outpath = "Processed Recipes/"
+    with open(inpath + filename) as data_file:
         data = json.load(data_file)
 
     # Process data
     print("Parsing Ingredients...")
-    data_ing = IngredientParser(data).parseAll()
+    data_ing = IngredientParser(data, debug=True).parseAll()
     print("Filtering Recipes...")
     data_out = RecipeFilterer(data_ing).filterAll()
 
     # Save data
-    jsonFile = open(tag + filename, "w")
+    jsonFile = open(outpath + tag + filename, "w")
     jsonFile.truncate()
     jsonFile.write(json.dumps({
             "name": data_out['name'],
             "rating": data_out['rating'],
             "reviews": data_out['reviews'],
+            "servings": data_out['servings'],
             "_ingredients": data_out['_ingredients']}))
     jsonFile.write("\n")
     jsonFile.close()

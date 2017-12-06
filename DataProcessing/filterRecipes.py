@@ -29,6 +29,7 @@ class RecipeFilterer():
             'name' : [i for j, i in enumerate(self.data['name']) if j in good_indices],
             'rating' : [i for j, i in enumerate(self.data['rating']) if j in good_indices],
             'reviews' : [i for j, i in enumerate(self.data['reviews']) if j in good_indices],
+            'servings' : [i for j, i in enumerate(self.data['servings']) if j in good_indices],
             '_ingredients' : [i for j, i in enumerate(self.data['_ingredients']) if j in good_indices]
         }
         return data_out
@@ -50,6 +51,7 @@ if __name__ == "__main__":
             "name": data_out['name'],
             "rating": data_out['rating'],
             "reviews": data_out['reviews'],
+            "servings": data_out['servings'],
             "_ingredients": data_out['_ingredients']}))
     jsonFile.write("\n")
     jsonFile.close()
