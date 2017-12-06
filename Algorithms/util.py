@@ -140,3 +140,43 @@ def loadJSONAsTokens(file_name):
 
 	f.close()
 	return inputs, ingredient_list
+
+def loadJSONForNet(file_name, split):
+	f = open("../data/_Brownies.json", 'r')
+	obj = json.load(f)
+	recipe_list = obj["_ingredients"]
+	recipe_list = [{ing[1]: ing[0] for ing in recipe} for recipe in recipe_list]
+	m = len(recipe_list)
+
+	all_ingredients = set()
+	for recipe in recipe_list:
+		all_ingredients.update(recipe)
+	ingredient_list = list(all_ingredients)
+	n = len(ingredient_list)
+	
+	label_list = obj["rating"]
+
+	cutoff1 = int(m * split[0])
+	cutoff2 = int(m * split[1])
+
+	input_train = np.zeros((cutoff1, n))
+	labels_train = np.zeros((cutoff1, 1))
+	input_dev = np.zeros((cutoff2 - cutoff1, n))
+	labels_dev = np.zeros((cutoff2 - cutoff1, 1))
+	input_test = np.zeros((m - cutoff2, n))
+	labels_test = np.zeros((m - cutoff2, 1))
+
+	for recipe in range(m):
+		as_freq_vec = dictToFreqVec(recipe_list[recipe], ingredient_list)
+		if recipe < cutoff1:
+			input_train[recipe, :] = as_freq_vec
+			labels_train[recipe] = label_list[recipe]
+		elif recipe < cutoff2:
+			input_dev[recipe - cutoff1, :] = as_freq_vec
+			labels_dev[recipe - cutoff1] = label_list[recipe]
+		else:
+			input_test[recipe - cutoff2, :] = as_freq_vec
+			labels_test[recipe - cutoff2] = label_list[recipe]
+
+	f.close()
+	return input_train, labels_train, input_dev, labels_dev, input_test, labels_test

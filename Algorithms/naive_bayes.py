@@ -132,9 +132,9 @@ def getOutliers(scores, n):
 		print "%s (%.2f)" %(pair[0], pair[1])
 
 if __name__ == "__main__":
-	makeErrorPlots()
-	# scores = getIngredientScores(4)
-	# getOutliers(scores, 5)
+	# makeErrorPlots()
+	scores = getIngredientScores(4)
+	getOutliers(scores, 5)
 
 
 
