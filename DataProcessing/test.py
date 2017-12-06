@@ -6,10 +6,10 @@ import json
 def main():
     data = None
     _data = None
-    with open('Processed Recipes/_Brownies.json') as data_file:
-        _data = json.load(data_file)
-    with open('Raw Recipes/Brownies.json') as data_file:
+    with open('Raw Recipes/Cookies.json') as data_file:
         data = json.load(data_file)
+    with open('Processed Recipes/_Cookies.json') as data_file:
+        _data = json.load(data_file)
 
     keys = ['name', 'rating', 'reviews', 'servings', 'ingredients']
     _keys = ['name', 'rating', 'reviews', 'servings', '_ingredients']
@@ -19,12 +19,30 @@ def main():
     for i in range(len(keys)-1):
         assert len(_data[_keys[i]]) == len(_data[_keys[i+1]])
 
-    assert(len(data[keys[0]]) == len(_data[keys[0]]))
-    l = len(data[keys[0]])
+    # assert(len(data[keys[0]]) == len(_data[keys[0]]))
+    l = len(_data[keys[0]])
     print("Read",l,"recipes.")
+    print(len(_data[keys[0]]), len(set(_data[keys[0]])))
 
-    for i in range(l):
-        print(data['ingredients'][i])
-        print(_data['_ingredients'][i])
+    # for i in range(l):
+        # print(data['ingredients'][i])
+        # print(_data['_ingredients'][i])
+
+    # seenNames = {}
+    # for i in range(l):
+    #     if data['name'][i] in seenNames.keys():
+    #         i2 = seenNames[data['name'][i]]
+    #         if data['ingredients'][i] == data['ingredients'][i2]:
+    #             print(i, seenNames[data['name'][i]], data['name'][i])
+    #             print(data['ingredients'][i])
+    #             print(data['ingredients'][i2])
+    #             print(data['servings'][i])
+    #             print(data['servings'][i2])
+    #             print(data['rating'][i])
+    #             print(data['rating'][i2])
+    #             print(data['reviews'][i])
+    #             print(data['reviews'][i2])
+    #     else:
+    #         seenNames[data['name'][i]] = i
 
 main()

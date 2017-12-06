@@ -16,9 +16,19 @@ HEADERS = {
 
 class AllrecipesMealScraper():
 
-    def __init__(self, url):
+    def __init__(self, url, filename):
         self.url = url  # URL to a the default category page (should end with something like ...cardslot%201)
-        self.delay = 1.5  # Seconds between requests
+        self.delay = 1.25  # Seconds between requests
+
+        self.count = 0
+        self.filename = filename + '.json'
+        self.title = []
+        self.rating = []
+        self.numReviews = []
+        self.ingredients = []
+        self.servings = []
+        self.recipeURLs = set()
+        self.usedURLs = []
 
     def url(self):
         return self.url
@@ -29,16 +39,33 @@ class AllrecipesMealScraper():
     def title(self):
         return self.soup.find('h1').get_text()
 
+    def loadPrevScrapeData(self, dataFileName):
+        with open(dataFileName) as data_file:
+            data = json.load(data_file)
+            self.usedURLs = data["usedURLs"]
+            self.recipeURLs = set(data["allURLs"])
+            self.title = data["name"]
+            self.rating = data["rating"]
+            self.numReviews = data["reviews"]
+            self.servings = data["servings"]
+            self.ingredients = data["ingredients"]
+
+            self.count = len(self.title)
+
+    def shortScrape(self):
+        # Scrape all recipes that have been found
+        for recipeURL in self.recipeURLs:
+            if recipeURL not in self.usedURLs:
+                self.tryScrapingRecipe(recipeURL, 0)
+                self.usedURLs.append(recipeURL)
+        print('Found', self.count, 'recipes')
+
+        self.saveProgress()
+        print('Done!')
+
     # Scrapes data about recipes for all pages of a category.
-    def scrape(self, filename):
-        self.filename = filename + '.json'
-        self.title = []
-        self.rating = []
-        self.numReviews = []
-        self.ingredients = []
-        self.servings = []
+    def scrape(self):
         self.recipeURLs = set()
-        self.count = 0
 
         # Iterates through pages of recipes
         page = 1
@@ -58,15 +85,7 @@ class AllrecipesMealScraper():
             except urllib.error.HTTPError as e:
                 assert (e.code == 404)  # Out of pages!
                 print('Found', page-1, 'pages.')
-
-                # Scrape all recipes that have been found
-                self.count = 0
-                for recipeURL in self.recipeURLs:
-                    self.tryScrapingRecipe(recipeURL, 0)
-                print('Found', self.count, 'recipes')
-
-                self.saveProgress()
-                print('Done!')
+                self.shortScrape()
                 return
 
             # Gather recipes found so far
@@ -74,12 +93,15 @@ class AllrecipesMealScraper():
             self.recipeURLs = self.recipeURLs.union(set([
                 'http://' + self.host() + link['href']
                 for link in recipes_html if link['href'].startswith('/recipe/')]))
+            self.saveProgress()
 
     # Write recipes so far to a json file
     def saveProgress(self):
         self.jsonFile = open(self.filename, "w")
         self.jsonFile.truncate()
         self.jsonFile.write(json.dumps({
+                "allURLs": list(self.recipeURLs),
+                "usedURLs": self.usedURLs,
                 "name": self.title,
                 "rating": self.rating,
                 "reviews": self.numReviews,
@@ -94,6 +116,7 @@ class AllrecipesMealScraper():
     def tryScrapingRecipe(self, recipeURL, tries):
         if (tries > 10):
             print("***Skipping recipe")
+            exit(0)
             return
 
         print(self.count+1, "- Scraping:", recipeURL)
@@ -108,6 +131,7 @@ class AllrecipesMealScraper():
             self.saveProgress();
             self.count += 1
             time.sleep(self.delay);
+            return
         except urllib.error.HTTPError as e:
             print('***Caught HTTPError')
             time.sleep(self.delay*5);
@@ -116,6 +140,7 @@ class AllrecipesMealScraper():
             print('***Caught URLError')
             time.sleep(self.delay*5);
             self.tryScrapingRecipe(recipeURL, tries+1)
+        print("UNCAUGHT ERROR")
 
         # except UnicodeEncodeError:
         #     print('UnicodeEncodeError')
@@ -129,9 +154,15 @@ class AllrecipesMealScraper():
 def main():
     # AllrecipesMealScraper('http://allrecipes.com/recipes/343/bread/quick-bread/fruit-bread/banana-bread/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('BananaBread')
     # AllrecipesMealScraper('http://allrecipes.com/recipes/839/desserts/cookies/chocolate-chip-cookies/?internalSource=hub%20nav&referringId=17254&referringContentType=recipe%20hub&referringPosition=5&linkName=hub%20nav%20exposed&clickId=hub%20nav%205').scrape('ChocChipCookies')
-    AllrecipesMealScraper('http://allrecipes.com/recipes/502/main-dish/pasta/lasagna/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Lasagna')
+    # AllrecipesMealScraper('http://allrecipes.com/recipes/502/main-dish/pasta/lasagna/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Lasagna')
     # AllrecipesMealScraper('http://allrecipes.com/recipes/151/breakfast-and-brunch/pancakes/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Pancakes')
     # AllrecipesMealScraper('http://allrecipes.com/recipes/838/desserts/cookies/brownies/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Brownies')
+    # AllrecipesMealScraper('http://allrecipes.com/recipes/362/desserts/cookies/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201').scrape('Cookies')
+
+    scraper = AllrecipesMealScraper('http://allrecipes.com/recipes/362/desserts/cookies/?internalSource=hubcard&referringContentType=search%20results&clickId=cardslot%201', "Cookies")
+    scraper.loadPrevScrapeData('PrevCookies.json')
+    scraper.shortScrape()
+
 
 
 

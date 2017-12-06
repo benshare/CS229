@@ -9,18 +9,30 @@ class RecipeFilterer():
     def filterAll(self):
         n_recipes = len(self.data['name'])
         good_indices = []
+        seenNames = {}
 
         for i in range(n_recipes):
             valid = True
 
             if self.data['reviews'][i] < self.min_reviews:
                 valid = False
+                print('too few reviews')
 
             if self.data['rating'][i] < 1:  # Lowest possible rating is one star
                 valid = False
+                print('rating error')
 
             if len(self.data['_ingredients'][i]) == 0:
                 valid = False
+                print('no ingredients')
+
+            if self.data['name'][i] in seenNames.keys():
+                i2 = seenNames[self.data['name'][i]]
+                if self.data['ingredients'][i] == self.data['ingredients'][i2]:
+                    valid = False
+                    print('duplicate')
+            else:
+                seenNames[self.data['name'][i]] = i
 
             if valid:
                 good_indices.append(i)
