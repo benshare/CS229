@@ -2,8 +2,8 @@
 import sys
 import tensorflow as tf
 import numpy as np
-from scipy.stats import invgauss
-from scipy.special import erfc
+# from scipy.stats import norm
+from scipy.special import erfc, erfcinv
 from util import loadJSONForNet as loadJSON
 from matplotlib import pyplot as plt
 
@@ -13,7 +13,7 @@ hidden_size = 300
 dish = "Brownies"
 input_file = "../dataProcessing/Processed Recipes/_" + dish + ".json"
 activation_fn = tf.nn.sigmoid
-max_epochs = 100
+max_epochs = 300
 batch_size = 20
 
 def undoLabelNormalization(all_data):
@@ -32,6 +32,14 @@ def undoLabelNormalization(all_data):
 		all_data[1 + 2 * i] = modified_labels
 	return mus, sigmas
 
+def renormalize(dists, mu, sigma):
+	for i in range(len(dists)):
+		dist = dists[i]
+		normalized = (dist - 1) / 4
+		normalized = -erfcinv(normalized * 2) * 2
+		normalized = normalized * sigma + mu
+		dists[i] = normalized
+
 def batches(tensors, size, random=True):
 	l = tensors[0].shape[0]
 	if random:
@@ -42,13 +50,15 @@ def batches(tensors, size, random=True):
 		batch_labels = tensors[1][size * batch: size * (batch + 1)]
 		yield batch_data, batch_labels
 
-def makeGraph(xs, ys, title, fn, setAxes=False):
+def makeGraph(xs, ys, title, fn, setAxes=False, plotLine=True):
 	plt.figure()
-	plt.scatter(xs, ys)
+	plt.scatter(xs, ys, c='b')
 	plt.title(title)
 	if setAxes:
-		plt.xlim(1, 5)
-		plt.ylim(1, 5)
+		plt.xlim(0.5, 5.5)
+		plt.ylim(0.5, 5.5)
+		if plotLine:
+			plt.plot([1, 5], [1, 5], 'r')
 	plt.savefig("../results/neural_net/" + dish + '/' + fn)
 
 def train(data, labels):
@@ -68,7 +78,7 @@ def train(data, labels):
 	y = tf.placeholder(tf.float32, [None, 1])
 
 	loss = tf.reduce_mean(tf.squared_difference(y, y_hat))
-	train_step = tf.train.AdamOptimizer(0.1, 0.1).minimize(loss)
+	train_step = tf.train.AdamOptimizer(0.01, 0.1).minimize(loss)
 
 	sess = tf.InteractiveSession()
 	tf.global_variables_initializer().run()
@@ -89,7 +99,7 @@ def train(data, labels):
 
 	return params
 
-def test(data, labels, params):
+def test(data, labels, params, mu, sigma):
 	M = data.shape[0]
 	N = data.shape[1]
 
@@ -111,14 +121,20 @@ def test(data, labels, params):
 
 	feed_dict = {x: data, y: labels, W1: params[0], b1: params[1], W2: params[2], b2: params[3]}
 	result, predictions = sess.run([loss, y_hat], feed_dict=feed_dict)
-	makeGraph(labels, predictions, "Labels vs. predictions", "testing", setAxes=True)
-	print "Test loss: %f" % result
+	makeGraph(labels, predictions, "Labels vs. predictions", "test1", setAxes=True)
+	# renormalize([predictions, labels], mu, sigma)
+	# makeGraph(labels, predictions, "Labels vs. predictions", "test2", setAxes=True)
+	print "Test loss: %f" % (result)
 
 if __name__ == '__main__':
 	all_data = list(loadJSON(input_file, [1, 1]))
+	# makeGraph(all_data[1], all_data[1], "testing", "before", setAxes=True)
 	mus, sigmas = undoLabelNormalization(all_data)
 	data_train, labels_train, data_dev, labels_dev, data_test, labels_test = all_data
+	# makeGraph(labels_train, labels_train, "testing", "middle", setAxes=True)
+	# renormalize(labels_train, mus[0], sigmas[0])
+	# makeGraph(labels_train, labels_train, "testing", "after", setAxes=True)
 
 	params = train(data_train, labels_train)
-	test(data_train, labels_train, params)
+	test(data_train, labels_train, params, mus[0], sigmas[0])
 
