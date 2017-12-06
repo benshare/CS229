@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 
 def main():
-    with open('_Brownies.json') as data_file:
+    with open('Raw Recipes/Cookies.json') as data_file:
         data = json.load(data_file)
 
         plt.figure()
