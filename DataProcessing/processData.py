@@ -7,16 +7,18 @@ from parseIngredients import IngredientParser
 if __name__ == "__main__":
     # Read data
     data = None
-    filename = "Cookies.json"
+    filename = "test.json"
     tag = "_"
     inpath = "Raw Recipes/"
     outpath = "Processed Recipes/"
+    cleanFoodFilename = "Ingredient Lists/Brownies_Ingredients_Clean_Super_Simple.json"
+
     with open(inpath + filename) as data_file:
         data = json.load(data_file)
 
     # Process data
     print("Parsing Ingredients...")
-    data_ing = IngredientParser(data, debug=False).parseAll()
+    data_ing = IngredientParser(data, cleanFoodFilename, debug=False).parseAll()
     print("Filtering Recipes...")
     data_out = RecipeFilterer(data_ing).filterAll()
 
