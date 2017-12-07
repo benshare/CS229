@@ -25,8 +25,8 @@ def excluded(raw_ingredient, exclude_list):
     return False
 
 def found_better_match(s_clean, raw_ingredient, best_match, exclude_list):
-    return s_clean in raw_ingredient.lower() and len(s_clean) > len(best_match) #\
-       # and not excluded(raw_ingredient, exclude_list)
+    return s_clean in raw_ingredient.lower() and len(s_clean) > len(best_match) \
+        and not excluded(raw_ingredient, exclude_list)
 
 def match_ingredient(raw_ingredient, parsed_names):
     best_match = ''
