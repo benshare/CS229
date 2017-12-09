@@ -125,6 +125,7 @@ class IngredientParser():
             for ingredient in recipe:
                 _ingredient = self.parseIngredient(ingredient)
                 if not(_ingredient == []):
+                    _ingredient[0] /= self.data['servings'][i]
                     _recipe.append(_ingredient)
             _recipes.append(_recipe)
 

@@ -21,8 +21,8 @@ def main():
 
     # assert(len(data[keys[0]]) == len(_data[keys[0]]))
     l = len(_data[keys[0]])
-    print("Read",l,"recipes.")
-    print(len(_data[keys[0]]), len(set(_data[keys[0]])))
+    print(len(data[keys[0]]),"raw recipes.")
+    print(l,"filtered recipes.")
 
     # for i in range(l):
         # print(data['ingredients'][i])
