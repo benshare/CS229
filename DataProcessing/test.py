@@ -6,9 +6,9 @@ import json
 def main():
     data = None
     _data = None
-    with open('Raw Recipes/Cookies.json') as data_file:
+    with open('Raw Recipes/Brownies.json') as data_file:
         data = json.load(data_file)
-    with open('Processed Recipes/_Cookies.json') as data_file:
+    with open('Processed Recipes/_Brownies.json') as data_file:
         _data = json.load(data_file)
 
     keys = ['name', 'rating', 'reviews', 'servings', 'ingredients']
