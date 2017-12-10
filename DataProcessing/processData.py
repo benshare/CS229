@@ -8,10 +8,10 @@ if __name__ == "__main__":
     # Read data
     data = None
     filename = "Cookies.json"
-    tag = "_"
+    tag = "_tiny_"
     inpath = "Raw Recipes/"
     outpath = "Processed Recipes/"
-    cleanFoodFilename = "Ingredient Lists/Cookie_Ingredients_Clean_Full.json"
+    cleanFoodFilename = "Ingredient Lists/Cookie_Ingredients_Clean_Tiny.json"
 
     with open(inpath + filename) as data_file:
         data = json.load(data_file)
