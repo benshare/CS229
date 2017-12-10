@@ -7,11 +7,11 @@ from parseIngredients import IngredientParser
 if __name__ == "__main__":
     # Read data
     data = None
-    filename = "Brownies.json"
+    filename = "Lasagna.json"
     tag = "_tiny_"
     inpath = "Raw Recipes/"
     outpath = "Processed Recipes/"
-    cleanFoodFilename = "Ingredient Lists/Brownies_Ingredients_Clean_Tiny.json"
+    cleanFoodFilename = "Ingredient Lists/Lasagna_Ingredients_Clean_Tiny.json"
 
     with open(inpath + filename) as data_file:
         data = json.load(data_file)
