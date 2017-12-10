@@ -82,7 +82,7 @@ def loadTxtAsTokens(data_file):
 	return inputs, ingredient_list
 
 def loadJSONAsBuckets(file_name, split, buckets=[2, 3, 4, 5], get_names=False):
-	f = open("../data/_Brownies.json", 'r')
+	f = open(file_name, 'r')
 	obj = json.load(f)
 	recipe_list = obj["_ingredients"]
 	recipe_list = [{ing[1]: ing[0] for ing in recipe} for recipe in recipe_list]
@@ -120,7 +120,7 @@ def loadJSONAsBuckets(file_name, split, buckets=[2, 3, 4, 5], get_names=False):
 
 
 def loadJSONAsTokens(file_name):
-	f = open("../data/_Brownies.json", 'r')
+	f = open(file_name, 'r')
 	obj = json.load(f)
 	recipe_list = obj["_ingredients"]
 	recipe_list = [{ing[1]: ing[0] for ing in recipe} for recipe in recipe_list]
@@ -142,7 +142,7 @@ def loadJSONAsTokens(file_name):
 	return inputs, ingredient_list
 
 def loadJSONForNet(file_name, split):
-	f = open("../data/_Brownies.json", 'r')
+	f = open(file_name, 'r')
 	obj = json.load(f)
 	recipe_list = obj["_ingredients"]
 	recipe_list = [{ing[1]: ing[0] for ing in recipe} for recipe in recipe_list]

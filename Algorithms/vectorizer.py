@@ -2,16 +2,20 @@ import numpy as np
 from util import loadTxtAsTokens as loadTxt, loadJSONAsTokens as loadJSON
 import os.path
 from random import randrange
+from sklearn.manifold import TSNE as tsne
+from matplotlib import pyplot as plt
+from copy import deepcopy
 
-dim = 500
-max_iters = 10000
+dim = 2
+max_iters = 500
 step_size = 1
 zero_center = True
 dimension_limit = 100
+epsilon = 10**(-8)
 
 result_path_prefix = "../results/embeddings/"
-input_path_prefix = "../data/"
-input_file = "_Brownies.json"
+input_path_prefix = "../dataProcessing/Processed Recipes/"
+input_file = "_Cookies.json"
 
 def train(matrix):
 	m, n = matrix.shape
@@ -24,13 +28,14 @@ def train(matrix):
 	out_embeddings = np.random.normal(0, 1, (n, dim))
 
 	for iteration in range(max_iters):
-		interval = 10**(np.log10(max_iters) - 1)
+		prev_embedding = deepcopy(in_embeddings)
+		interval = 10
 		if iteration % interval == 0:
 			print "Iteration %d" %iteration
 		in_update = np.dot(cooccurences, out_embeddings) / step_size
-		out_embeddings = np.dot(cooccurences, in_embeddings) / step_size
+		out_update = np.dot(cooccurences, in_embeddings) / step_size
 		in_embeddings += in_update
-		out_embeddings += out_embeddings
+		out_embeddings += out_update
 
 		if zero_center:
 			in_embeddings -= np.mean(in_embeddings, axis=0)
@@ -38,6 +43,12 @@ def train(matrix):
 
 		in_embeddings /= (np.max(np.abs(in_embeddings), axis=0) / dimension_limit)
 		out_embeddings /= (np.max(np.abs(out_embeddings), axis=0) / dimension_limit)
+
+		cur_embedding = deepcopy(in_embeddings)
+		diff = np.linalg.norm(prev_embedding - cur_embedding)
+		if diff < epsilon:
+			print "Converged on iteration %d" %iteration
+			break
 
 	return in_embeddings
 
@@ -109,12 +120,25 @@ def getTestEmbeddings(m, d):
 		embeddings[i*4+3][:] = base + diff * 6
 	return embeddings, [str(i) for i in range(m)]
 
+def project(embeddings, tokens, selectedTokens):
+	# print embeddings.shape
+	print "Running tsne"
+
+	projected = tsne().fit_transform(embeddings)
+	colors = np.array([t in selectedTokens for t in tokens])
+
+	plt.figure()
+	plt.scatter(projected[:, 0], projected[:, 1], c=colors)
+	plt.savefig("../results/embeddings/projection")
+
 if __name__ == "__main__":
-	# writeEmbeddingFiles()
+	writeEmbeddingFiles()
 
 	embeddings, tokens = loadEmbeddingFiles(input_file, dim)
-	print getKBestSubstitutes("salt", embeddings, tokens, 10)
-	print getKWorstSubstitutes("salt", embeddings, tokens, 10)
+	# targets = ['sunflower seed', 'hot chocolate', 'butterscotch pudding mix', 'cashew', 'milk chocolate candy bar', 'coconut', 'corn syrup']
+	# project(embeddings, tokens, targets)
+	print getKBestSubstitutes("milk chocolate", embeddings, tokens, 7)
+	# print getKWorstSubstitutes("milk chocolate", embeddings, tokens, 7)
 
 	# m = 12
 	# d = 10
