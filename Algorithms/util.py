@@ -155,6 +155,9 @@ def loadJSONForNet(file_name, split):
 	n = len(ingredient_list)
 	
 	label_list = obj["rating"]
+	perm = np.random.permutation(m)
+	recipe_list = np.array([dictToFreqVec(recipe_list[ind], ingredient_list) for ind in range(m)])[perm]
+	label_list = np.array(label_list)[perm]
 
 	cutoff1 = int(m * split[0])
 	cutoff2 = int(m * split[1])
@@ -167,7 +170,8 @@ def loadJSONForNet(file_name, split):
 	labels_test = np.zeros((m - cutoff2, 1))
 
 	for recipe in range(m):
-		as_freq_vec = dictToFreqVec(recipe_list[recipe], ingredient_list)
+		as_freq_vec = recipe_list[recipe, :]
+		# as_freq_vec = dictToFreqVec(recipe_list[recipe], ingredient_list)
 		if recipe < cutoff1:
 			input_train[recipe, :] = as_freq_vec
 			labels_train[recipe] = label_list[recipe]

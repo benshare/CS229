@@ -16,7 +16,7 @@ gamma = .01
 result_path_prefix = "../results/embeddings/"
 input_path_prefix = "../dataProcessing/Processed Recipes/"
 # input_file = "_Cookies.json"
-input_file = "_Cookies_CBOWembeddings_5_20epochs"
+input_file = "_Cookies_CBOWembeddings_20_20epochs"
 
 def batches(recipes, size):
 	m, n = recipes.shape
@@ -204,8 +204,52 @@ def highlight(embeddings, tokens, keyword):
 	plt.figure()
 	plt.scatter(projected[:, 0], projected[:, 1], c=colors)
 	for label, x, y in zip(tokens, projected[:, 0], projected[:, 1]):
-		plt.annotate(label, xy=(x, y), xytext=(-10, -10), textcoords='offset points', size='x-small')
-	plt.savefig("../results/embeddings/highlight")
+		if keyword in label:
+			plt.annotate(label, xy=(x, y), xytext=(-10, -10), textcoords='offset points', size='x-small')
+	plt.savefig("../results/embeddings/highlight_\"%s\"" %keyword)
+
+def getKNeighbors(matrix, chosen_index, k, best=True):
+	given = matrix[chosen_index][:]
+	other_vecs = np.zeros((matrix.shape[0]-1, matrix.shape[1]))
+	other_vecs[:chosen_index][:] = matrix[:chosen_index][:]
+	other_vecs[chosen_index:][:] = matrix[chosen_index + 1:][:]
+
+	distance_vectors = other_vecs - given
+	distances = np.linalg.norm(distance_vectors, axis=1)
+
+	if best:
+		indices = np.argpartition(distances, k-1)[:k]
+	else:
+		indices = np.argpartition(distances, -k)[-k:]
+	for i in range(len(indices)):
+		if indices[i] >= chosen_index:
+			indices[i] += 1
+	return indices
+
+def getKBestSubstitutes(ingredient, embeddings, tokens, k):
+	chosen_index = tokens.index(ingredient)
+	found = getKNeighbors(embeddings, chosen_index, k)
+	return [tokens[idx] for idx in found]
+
+def getKWorstSubstitutes(ingredient, embeddings, tokens, k):
+	chosen_index = tokens.index(ingredient)
+	found = getKNeighbors(embeddings, chosen_index, k, best=False)
+	return [tokens[idx] for idx in found]
+
+def evaluate(ingredient, embeddings, tokens, k=5):
+	best = getKBestSubstitutes(ingredient, embeddings, tokens, k)
+	worst = getKWorstSubstitutes(ingredient, embeddings, tokens, k)
+
+	f = open(result_path_prefix + 'substitutes_\"%s\"' % ingredient, 'w+')
+	f.write("Best substitutes:\n")
+	for i in best:
+		f.write(i + '\n')
+
+	f.write("\nWorst substitutes:\n")
+	for i in worst:
+		f.write(i + '\n')
+
+	f.close()
 
 if __name__ == "__main__":
 	# writeEmbeddingFiles([2, 5, 20])
@@ -213,9 +257,9 @@ if __name__ == "__main__":
 	embeddings, tokens = loadEmbeddingFiles(input_file)#, hidden_size)
 	# targets = ["semi-sweet chocolate"]
 	# project(embeddings, tokens)
-	highlight(embeddings, tokens, "chocolate")
-	# print getKBestSubstitutes("milk chocolate", embeddings, tokens, 7)
-	# print getKWorstSubstitutes("milk chocolate", embeddings, tokens, 7)
+	# highlight(embeddings, tokens, "peanut butter")
+	evaluate("milk", embeddings, tokens)
+
 
 	# m = 12
 	# d = 10

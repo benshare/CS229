@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 train_test_split = 0.7
 result_path_prefix = "../results/naive_bayes/"
-input_file = "../data/_Brownies.json"
+input_file = "../dataProcessing/Processed Recipes/_Brownies.json"
 # input_file = "../data/train_data.txt"
 
 # Trains a naive Bayes model on the given input data (matrix)
@@ -61,6 +61,8 @@ def makeTwoLinePlot(xs, y1s, y2s, title, filename):
 	plt.scatter(xs, y1s)
 	plt.scatter(xs, y2s)
 	plt.title(title)
+	plt.xlabel("Number of buckets")
+	plt.ylabel("Error rate")
 	plt.savefig(filename)
 	plt.figure()
 
@@ -93,9 +95,9 @@ def makeErrorPlots():
 			errors.append(error)
 			lenient_errors.append(lenient_error)
 		if train_test_split == 1:
-			makeTwoLinePlot(breakups, errors, lenient_errors, "Error vs. bucket number", result_path_prefix + "nb_error_lenient_train_on_train")
+			makeTwoLinePlot(breakups, errors, lenient_errors, "1st/2nd guess accuracy", result_path_prefix + "nb_error_lenient_train_on_train")
 		else:
-			makeTwoLinePlot(breakups, errors, lenient_errors, "Error vs. bucket number", result_path_prefix + "nb_error_lenient_%dsplit" %int(10 * train_test_split))
+			makeTwoLinePlot(breakups, errors, lenient_errors, "1st/2nd guess accuracy", result_path_prefix + "nb_error_lenient_%dsplit" %int(10 * train_test_split))
 
 def getIngredientScores(num_categories):
 	bucket_width = 4.0 / num_categories
