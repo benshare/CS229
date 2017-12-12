@@ -206,7 +206,9 @@ def highlight(embeddings, tokens, keyword):
 	for label, x, y in zip(tokens, projected[:, 0], projected[:, 1]):
 		if keyword in label:
 			plt.annotate(label, xy=(x, y), xytext=(-10, -10), textcoords='offset points', size='x-small')
-	plt.savefig("../results/embeddings/highlight_\"%s\"" %keyword)
+		plt.xticks([])
+		plt.yticks([])
+	plt.savefig("../results/embeddings/highlight_\"%s\".svg" %keyword)
 
 def getKNeighbors(matrix, chosen_index, k, best=True):
 	given = matrix[chosen_index][:]
@@ -257,8 +259,8 @@ if __name__ == "__main__":
 	embeddings, tokens = loadEmbeddingFiles(input_file)#, hidden_size)
 	# targets = ["semi-sweet chocolate"]
 	# project(embeddings, tokens)
-	# highlight(embeddings, tokens, "peanut butter")
-	evaluate("milk", embeddings, tokens)
+	highlight(embeddings, tokens, "flour")
+	# evaluate("milk", embeddings, tokens)
 
 
 	# m = 12

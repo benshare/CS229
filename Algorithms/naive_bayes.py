@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 train_test_split = 0.7
 result_path_prefix = "../results/naive_bayes/"
-input_file = "../dataProcessing/Processed Recipes/_Brownies.json"
+input_file = "../dataProcessing/Processed Recipes/_Cookies.json"
 # input_file = "../data/train_data.txt"
 
 # Trains a naive Bayes model on the given input data (matrix)
@@ -45,6 +45,19 @@ def test(matrix, state, num_categories):
 
 	return predictions, second_guesses
 
+def getModel(num_categories, split, get_names=False):
+	bucket_width = 4.0 / num_categories
+	buckets = [1 + bucket_width * (i + 1) for i in range(num_categories - 1)]
+	buckets.append(5)
+	if get_names:
+		train_inputs, train_labels, ingredient_list = loadJSON(input_file, split, buckets=buckets, get_names=True)
+		model = train(train_inputs, train_labels, num_categories)
+		return model, ingredient_list, buckets, bucket_width
+
+	train_inputs, train_labels, test_inputs, test_labels = loadJSON(input_file, split, buckets=buckets)
+	model = train(train_inputs, train_labels, num_categories)
+	return model, test_inputs, test_labels
+
 def evaluate(output, label):
 	return (output != label).sum() * 1. / len(output)
 
@@ -54,7 +67,7 @@ def evalLenient(output, second_guesses, label):
 def makePlot(xs, ys, title, filename):
 	plt.scatter(xs, ys)
 	plt.title(title)
-	plt.savefig(filename)
+	plt.savefig(filename + '.svg')
 	plt.figure()
 
 def makeTwoLinePlot(xs, y1s, y2s, title, filename):
@@ -63,52 +76,29 @@ def makeTwoLinePlot(xs, y1s, y2s, title, filename):
 	plt.title(title)
 	plt.xlabel("Number of buckets")
 	plt.ylabel("Error rate")
-	plt.savefig(filename)
+	plt.savefig(filename + '.svg')
 	plt.figure()
 
 def makeErrorPlots():
 	breakups = range(1,9)
-	splits = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
+	splits = [0.5, 0.6, 0.7, 0.8, 0.9]
 	for train_test_split in splits:
 		errors = []
 		lenient_errors = []
 		for num_categories in breakups:
-			bucket_width = 4.0 / num_categories
-			buckets = [1 + bucket_width * (i + 1) for i in range(num_categories - 1)]
-			buckets.append(5)
-			if ".txt" in input_file:
-				train_inputs, train_labels = loadTxt(input_file, buckets)
-				test_inputs, test_labels = loadTxt(input_file.replace("train", "test"), buckets)
-			elif ".json" in input_file:
-				train_inputs, train_labels, test_inputs, test_labels = loadJSON(input_file, train_test_split, buckets)
+			model, test_inputs, test_labels = getModel(num_categories, train_test_split)
 
-			model = train(train_inputs, train_labels, num_categories)
-			if train_test_split == 1:
-				predictions, second_guesses = test(train_inputs, model, num_categories)
-				error = evaluate(predictions, train_labels)
-				lenient_error = evalLenient(predictions, second_guesses, train_labels)
-			else:
-				predictions, second_guesses = test(test_inputs, model, num_categories)
-				error = evaluate(predictions, test_labels)
-				lenient_error = evalLenient(predictions, second_guesses, test_labels)
+			predictions, second_guesses = test(test_inputs, model, num_categories)
+			error = evaluate(predictions, test_labels)
+			lenient_error = evalLenient(predictions, second_guesses, test_labels)
 
 			errors.append(error)
 			lenient_errors.append(lenient_error)
-		if train_test_split == 1:
-			makeTwoLinePlot(breakups, errors, lenient_errors, "1st/2nd guess accuracy", result_path_prefix + "nb_error_lenient_train_on_train")
 		else:
 			makeTwoLinePlot(breakups, errors, lenient_errors, "1st/2nd guess accuracy", result_path_prefix + "nb_error_lenient_%dsplit" %int(10 * train_test_split))
 
 def getIngredientScores(num_categories):
-	bucket_width = 4.0 / num_categories
-	buckets = [1 + bucket_width * (i + 1) for i in range(num_categories - 1)]
-	buckets.append(5)
-	if ".txt" in input_file:
-		train_inputs, train_labels = loadTxt(input_file, buckets)
-	elif ".json" in input_file:
-		train_inputs, train_labels, ingredient_list = loadJSON(input_file, 1, buckets=buckets, get_names=True)
-
-	model = train(train_inputs, train_labels, num_categories)
+	model, ingredient_list, buckets, bucket_width = getModel(num_categories, 0.8, get_names=True)
 	dists = model["phis"]
 	dists /= np.reshape(np.sum(dists, axis=1), (dists.shape[0], 1))
 	scores = np.dot(dists, np.transpose(np.array(buckets) - bucket_width / 2))
@@ -133,10 +123,50 @@ def getOutliers(scores, n):
 	for pair in scores[-n:]:
 		print "%s (%.2f)" %(pair[0], pair[1])
 
+def generateRecipe(num_categories, units=100, label=0):
+	model, ingredient_list, _, __ = getModel(num_categories, 1, get_names=True)
+	probs = model['phis'][:, label]
+	# print probs.shape
+	cumulative = np.zeros(probs.shape)
+	cumulative[0] = probs[0]
+	for ind in range(1, len(probs)):
+		cumulative[ind] = cumulative[ind-1] + probs[ind]
+	# print cumulative
+
+	result = np.zeros(cumulative.shape)
+	for unit in range(units):
+		v = np.random.rand()
+		given = np.searchsorted(cumulative, v)
+		result[given] += 1
+
+	return result, ingredient_list
+
+	# for ind in range(units):
+
+	# bucket_width = 4.0 / num_categories
+	# buckets = [1 + bucket_width * (i + 1) for i in range(num_categories - 1)]
+	# buckets.append(5)
+	# if ".txt" in input_file:
+	# 	train_inputs, train_labels = loadTxt(input_file, buckets)
+	# elif ".json" in input_file:
+	# 	train_inputs, train_labels, ingredient_list = loadJSON(input_file, 1, buckets=buckets, get_names=True)
+
+def printRecipes(recipes, ingredient_list):
+	for recipe in recipes:
+		print "Suggested recipe:"
+		for ind in range(recipe.shape[0]):
+			if recipe[ind]:
+				print "%d of %s" %(recipe[ind], ingredient_list[ind])
+		print ""
+
 if __name__ == "__main__":
 	# makeErrorPlots()
-	scores = getIngredientScores(4)
-	getOutliers(scores, 5)
+	# scores = getIngredientScores(4)
+	# getOutliers(scores, 5)
+	recipe1, ingredient_list = generateRecipe(4, units=50, label=3)
+	recipe2, ingredient_list = generateRecipe(4, units=50, label=0)
+	printRecipes([recipe1, recipe2], ingredient_list)
+
 
 
 
