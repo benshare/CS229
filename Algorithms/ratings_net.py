@@ -1,5 +1,3 @@
-
-import sys
 import tensorflow as tf
 import numpy as np
 from scipy.special import erfc, erfcinv
@@ -12,9 +10,9 @@ hidden_size = 20
 dish = "Cookies"
 input_file = "../dataProcessing/Processed Recipes/_" + dish + ".json"
 activation_fn = tf.nn.sigmoid
-max_epochs = 40
+max_epochs = 100
 batch_size = 20
-gamma = 10**(-5)
+gamma = 10**(-4)
 
 def undoLabelNormalization(all_data):
 	index_list = [1, 5]
@@ -65,8 +63,8 @@ def makeGraph(xs, ys, title, fn, setAxes=False, plotLine=True):
 		plt.ylabel("Model predictions")
 	plt.savefig("../results/ratings_net/" + dish + '/' + fn)
 
-def bucket(before, num_buckets=4):
-	width = (5.0 - 1) / num_buckets
+def bucket(before, num_buckets = 4):
+	width = (4.0) / num_buckets
 	cutoffs = [2 + width * i for i in range(num_buckets - 1)]
 	after = [np.searchsorted(cutoffs, b)[0] for b in before]
 	return after
@@ -144,7 +142,7 @@ def trainBuckets(data, labels, num_buckets=4):
 	diff = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=y_hat))
 	norms = tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2)
 	loss = diff + gamma * norms
-	train_step = tf.train.AdamOptimizer(0.02, 0.1).minimize(loss)
+	train_step = tf.train.AdamOptimizer(0.02).minimize(loss)
 
 	sess = tf.InteractiveSession()
 	tf.global_variables_initializer().run()
@@ -176,7 +174,7 @@ def trainBuckets(data, labels, num_buckets=4):
 
 	return epoch_params
 
-def test(data, labels, params, mu=None, sigma=None, fn=None):
+def test(data, labels, params, mu=None, sigma=None, fn=""):
 	M = data.shape[0]
 	N = data.shape[1]
 
@@ -199,7 +197,10 @@ def test(data, labels, params, mu=None, sigma=None, fn=None):
 	feed_dict = {x: data, y: labels, W1: params[0], b1: params[1], W2: params[2], b2: params[3]}
 	result, predictions = sess.run([loss, y_hat], feed_dict=feed_dict)
 	makeGraph(labels, predictions, "Labels vs. predictions", (fn if fn else "test_preds"), setAxes=True)
-	print "Test loss: %f" % (result)
+	which = "Dev"
+	if 'train' in fn:
+		which = "Train"
+	print "%s loss: %f" % (which, result)
 
 def testRegressionToBuckets(data, labels, params, num_buckets=4):
 	M = data.shape[0]
@@ -279,7 +280,7 @@ def testBuckets(data, labels_before, param_list, fn=None, num_buckets=4):
 	print mat
 	print "Accuracy: %f" % (100 * accuracy_by_epoch[best_epoch])
 
-def test_bunch(data, labels, param_list, mu=None, sigma=None, fn=None):
+def test_bunch(data, labels, param_list, mu=None, sigma=None, fn=""):
 	M = data.shape[0]
 	N = data.shape[1]
 
@@ -301,8 +302,6 @@ def test_bunch(data, labels, param_list, mu=None, sigma=None, fn=None):
 
 	epoch_losses = []
 	for params in param_list:
-		for p in params:
-			print p.shape
 		feed_dict = {x: data, y: labels, W1: params[0], b1: params[1], W2: params[2], b2: params[3]}
 		result = sess.run([loss], feed_dict=feed_dict)[0]
 		epoch_losses.append(result)
@@ -312,19 +311,35 @@ def test_bunch(data, labels, param_list, mu=None, sigma=None, fn=None):
 	return best_ind, epoch_losses[best_ind]
 
 if __name__ == '__main__':
-	all_data = list(loadJSON(input_file, [0.8, 0.8]))
 
+	def doRegression():
+		param_list = train(data_train, labels_train)
+
+		best_epoch, best_loss = test_bunch(data_test, labels_test, param_list)
+		print "Best epoch:", best_epoch
+		best_params = param_list[best_epoch]
+
+		test(data_dev, labels_dev, best_params)
+		test(data_train, labels_train, best_params, fn="train_preds")
+
+	def doClassification():
+		param_list = trainBuckets(data_train, labels_train)
+		testBuckets(data_test, labels_test, param_list)
+
+	# See util.py for explanation of loading process.
+	# [0.6, 0.8] means 0.6 train, 0.2 dev, 0.2 test.
+	all_data = list(loadJSON(input_file, [0.6, 0.8]))
+
+	# Optional; spreads data out to approximate a uniform distribution.
+	# mus/sigmas are needed if wanting to renormalize (see fn above).
 	mus, sigmas = undoLabelNormalization(all_data)
-	data_train, labels_train, data_dev, labels_dev, data_test, labels_test = all_data
-	print "Train size:", data_train.shape
-	print "Test size:", data_test.shape
 
-	param_list = trainBuckets(data_train, labels_train)
-	# best_epoch, best_loss = test_bunch(data_test, labels_test, param_list)
-	# print "Best epoch:", best_epoch
-	# best_params = param_list[best_epoch]
-	testBuckets(data_test, labels_test, param_list)
-	# print "Best epoch = %d: loss = %f" %(best_epoch, best_loss)
-	# test(data_test, labels_test, param_list[best_epoch])#, mu=mus[0], sigma=sigmas[0])
-	# test(data_train, labels_train, param_list[-1], fn="train_preds")
+	data_train, labels_train, data_dev, labels_dev, data_test, labels_test = all_data
+	print "Train size:", data_train.shape[0]
+	print "Test size:", data_test.shape[0]
+
+	doRegression()
+	# doClassification()
+
+
 

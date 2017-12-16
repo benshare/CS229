@@ -4,8 +4,7 @@ from matplotlib import pyplot as plt
 
 train_test_split = 0.7
 result_path_prefix = "../results/naive_bayes/"
-input_file = "../dataProcessing/Processed Recipes/_Cookies.json"
-# input_file = "../data/train_data.txt"
+input_file = "../dataProcessing/Processed Recipes/_Brownies.json"
 
 # Trains a naive Bayes model on the given input data (matrix)
 # and labels (category). num_categories is needed to know how
@@ -126,12 +125,11 @@ def getOutliers(scores, n):
 def generateRecipe(num_categories, units=100, label=0):
 	model, ingredient_list, _, __ = getModel(num_categories, 1, get_names=True)
 	probs = model['phis'][:, label]
-	# print probs.shape
+
 	cumulative = np.zeros(probs.shape)
 	cumulative[0] = probs[0]
 	for ind in range(1, len(probs)):
 		cumulative[ind] = cumulative[ind-1] + probs[ind]
-	# print cumulative
 
 	result = np.zeros(cumulative.shape)
 	for unit in range(units):
@@ -141,31 +139,33 @@ def generateRecipe(num_categories, units=100, label=0):
 
 	return result, ingredient_list
 
-	# for ind in range(units):
-
-	# bucket_width = 4.0 / num_categories
-	# buckets = [1 + bucket_width * (i + 1) for i in range(num_categories - 1)]
-	# buckets.append(5)
-	# if ".txt" in input_file:
-	# 	train_inputs, train_labels = loadTxt(input_file, buckets)
-	# elif ".json" in input_file:
-	# 	train_inputs, train_labels, ingredient_list = loadJSON(input_file, 1, buckets=buckets, get_names=True)
-
-def printRecipes(recipes, ingredient_list):
+def printRecipes(recipes, ingredient_list, units=100, servings=20):
 	for recipe in recipes:
 		print "Suggested recipe:"
 		for ind in range(recipe.shape[0]):
 			if recipe[ind]:
-				print "%d of %s" %(recipe[ind], ingredient_list[ind])
+				print "%.1f of %s" %(recipe[ind] * 2.5 * servings / units, ingredient_list[ind])
 		print ""
 
 if __name__ == "__main__":
-	# makeErrorPlots()
-	# scores = getIngredientScores(4)
-	# getOutliers(scores, 5)
-	recipe1, ingredient_list = generateRecipe(4, units=50, label=3)
-	recipe2, ingredient_list = generateRecipe(4, units=50, label=0)
-	printRecipes([recipe1, recipe2], ingredient_list)
+	# Any of the following functions can be run independently; comment out others or run in sequence.
+
+	# Train then test the model on the specified dataset. Produces error plots for various data splits.
+	makeErrorPlots()
+
+	# Train model, then view highest/lowest scoring ingredients for the specified dish.
+	scores = getIngredientScores(4)
+	getOutliers(scores, 5)
+
+	# Train model, then use to generate a recipe.
+	# First param is number of buckets.
+	# Second is how many chunks to generate the recipe in.
+	# Third is what quality recipe to produce (so label = 3
+	#	when num_buckets = 4 is the best category, 0 is always the worst).
+	units = 40
+	recipe1, ingredient_list = generateRecipe(4, units=units, label=3)
+	recipe2, ingredient_list = generateRecipe(4, units=units, label=0)
+	printRecipes([recipe1], ingredient_list, units=units)
 
 
 

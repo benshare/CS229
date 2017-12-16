@@ -171,7 +171,6 @@ def loadJSONForNet(file_name, split):
 
 	for recipe in range(m):
 		as_freq_vec = recipe_list[recipe, :]
-		# as_freq_vec = dictToFreqVec(recipe_list[recipe], ingredient_list)
 		if recipe < cutoff1:
 			input_train[recipe, :] = as_freq_vec
 			labels_train[recipe] = label_list[recipe]

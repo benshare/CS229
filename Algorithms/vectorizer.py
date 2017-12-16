@@ -8,7 +8,7 @@ from copy import deepcopy
 
 dim = 2
 max_iters = 500
-step_size = 1
+step_size = .1
 zero_center = True
 dimension_limit = 100
 epsilon = 10**(-8)
@@ -32,8 +32,8 @@ def train(matrix):
 		interval = 10
 		if iteration % interval == 0:
 			print "Iteration %d" %iteration
-		in_update = np.dot(cooccurences, out_embeddings) / step_size
-		out_update = np.dot(cooccurences, in_embeddings) / step_size
+		in_update = np.dot(cooccurences, out_embeddings) * step_size
+		out_update = np.dot(cooccurences, in_embeddings) * step_size
 		in_embeddings += in_update
 		out_embeddings += out_update
 
@@ -121,7 +121,6 @@ def getTestEmbeddings(m, d):
 	return embeddings, [str(i) for i in range(m)]
 
 def project(embeddings, tokens, selectedTokens):
-	# print embeddings.shape
 	print "Running tsne"
 
 	projected = tsne().fit_transform(embeddings)
@@ -135,15 +134,9 @@ if __name__ == "__main__":
 	writeEmbeddingFiles()
 
 	embeddings, tokens = loadEmbeddingFiles(input_file, dim)
-	# targets = ['sunflower seed', 'hot chocolate', 'butterscotch pudding mix', 'cashew', 'milk chocolate candy bar', 'coconut', 'corn syrup']
-	# project(embeddings, tokens, targets)
-	print getKBestSubstitutes("milk chocolate", embeddings, tokens, 7)
-	# print getKWorstSubstitutes("milk chocolate", embeddings, tokens, 7)
-
-	# m = 12
-	# d = 10
-	# embeddings, tokens = getTestEmbeddings(m, d)
-	# for idx in range(m):
-	# 	print "neighbor for %d:" %idx
-	# 	print getKSubstituteSuggestions(str(idx), embeddings, tokens, 1)
+	best = getKBestSubstitutes("milk chocolate", embeddings, tokens, 7)
+	worst = getKWorstSubstitutes("milk chocolate", embeddings, tokens, 7)
+	print "Best substitutes:", best
+	print "Worst substitutes:", worst
+	project(embeddings, tokens, best)
 

@@ -10,13 +10,13 @@ import tensorflow as tf
 step_size = 1
 batch_size = 20
 epsilon = 10**(-6)
-activation_fn = lambda x: x#tf.nn.sigmoid
+activation_fn = tf.nn.sigmoid
 gamma = .01
 
 result_path_prefix = "../results/embeddings/"
 input_path_prefix = "../dataProcessing/Processed Recipes/"
-# input_file = "_Cookies.json"
-input_file = "_Cookies_CBOWembeddings_20_20epochs"
+input_file = "_Cookies.json"
+load_file = "_Cookies_CBOWembeddings_20_20epochs"
 
 def batches(recipes, size):
 	m, n = recipes.shape
@@ -36,28 +36,12 @@ def expandRecipes(recipes):
 		np.fill_diagonal(expanded, 0)
 		indices = np.eye(n)
 
-		# yield expanded, indices, labels
 		for ind in range(n):
 			yield np.reshape(expanded[ind,:], (1, n)), np.reshape(indices[ind,:], (1, n)), labels[ind]
 
-def trainCBOW(matrix, max_epochs=5, hidden_size=5):
+def trainCBOW(matrix, max_epochs=10, hidden_size=5):
 	m, n = matrix.shape
 	print "Num recipes = %d" %m
-
-	# x1 = tf.placeholder(tf.float32, [n, n])
-	# b1 = tf.Variable(tf.zeros([1, hidden_size]))
-
-	# x2 = tf.placeholder(tf.float32, [n, n])
-	# b2 = tf.Variable(tf.zeros([1, hidden_size]))
-
-	# W1 = tf.Variable(tf.random_normal([n, hidden_size]))
-
-	# h1 = activation_fn(tf.matmul(x1, W1) + b1)
-	# h2 = activation_fn(tf.matmul(x2, W1) + b2)
-	# b3 = tf.Variable(tf.zeros([1]))
-
-	# y_hat = tf.reduce_sum(tf.mul(h1, h2), axis=1) + b3
-	# y = tf.placeholder(tf.float32, [n])
 	x1 = tf.placeholder(tf.float32, [1, n])
 	b1 = tf.Variable(tf.zeros([1, hidden_size]))
 	W1 = tf.Variable(tf.random_normal([n, hidden_size]))
@@ -74,7 +58,7 @@ def trainCBOW(matrix, max_epochs=5, hidden_size=5):
 	y = tf.placeholder(tf.float32, [])
 
 	diff = tf.abs(y - y_hat)
-	loss = diff + gamma * (tf.nn.l2_loss(W1) + tf.nn.l2_loss(W1))#tf.reduce_mean(tf.abs(y - y_hat))
+	loss = diff + gamma * (tf.nn.l2_loss(W1) + tf.nn.l2_loss(W1))
 	train_step = tf.train.GradientDescentOptimizer(0.01).minimize(loss)
 
 	sess = tf.InteractiveSession()
@@ -87,19 +71,11 @@ def trainCBOW(matrix, max_epochs=5, hidden_size=5):
 		epoch_loss = 0
 		count = 1
 		for context, index, label in expandRecipes(inputs):
-			# print context[0,:]
-			# print index
-			# print label
 			feed_dict = {x1: context, x2: index, y: label}
 			_, error, embeddings, pred = sess.run([train_step, diff, W1, y_hat], feed_dict=feed_dict)
-			# print pred
-			# raise Exception("aah")
-			# print count, np.linalg.norm(embeddings), np.linalg.norm(context)
 			epoch_loss += error
-			# print error
 			if count % (100 * n) == 0:
 				print "Finished example %d" % (count / n)
-				# print np.linalg.norm(embeddings)
 				print "error: ", error
 			count += 1
 		epoch_loss /= m * n
@@ -111,9 +87,6 @@ def trainCBOW(matrix, max_epochs=5, hidden_size=5):
 
 	return embeddings
 
-def trainSkipgram(inputs):
-	pass
-
 def writeEmbeddingFiles(dims):
 	if ".txt" in input_file:
 		train_inputs, tokens = loadTxt(input_path_prefix + input_file)
@@ -121,21 +94,21 @@ def writeEmbeddingFiles(dims):
 		train_inputs, tokens = loadJSON(input_path_prefix + input_file)
 
 	for hidden_size in dims:
-		for me in [1, 5, 20]:
-			embeddings = trainCBOW(train_inputs, max_epochs=me, hidden_size=hidden_size)
+		embeddings = trainCBOW(train_inputs, hidden_size=hidden_size)
 
-			stem = input_file[:input_file.find('.')]
-			np.savetxt(result_path_prefix + stem + "_CBOWembeddings_%d_%depochs" %(hidden_size, me), embeddings)
+		stem = input_file[:input_file.find('.')]
+		np.savetxt(result_path_prefix + stem + "_CBOWembeddings_%d_%depochs" %(hidden_size, max_epochs), embeddings)
 
-			fn = result_path_prefix + stem + "_tokens"
-			if not os.path.isfile(fn):
-				f = open(fn, 'w+')
-				f.write(str(tokens))
-				f.close()
+		fn = result_path_prefix + stem + "_tokens"
+		if not os.path.isfile(fn):
+			f = open(fn, 'w+')
+			f.write(str(tokens))
+			f.close()
 
-def loadEmbeddingFiles(input_file):#, dimension):
-	# stem = input_file[:input_file.find('.')]
-	f = open(result_path_prefix + input_file)#stem + "_embeddings_" + str(dimension))
+	return embeddings, tokens
+
+def loadEmbeddingFiles(input_file):
+	f = open(result_path_prefix + input_file)
 	embeddings = np.loadtxt(f)
 	f.close()
 
@@ -254,19 +227,19 @@ def evaluate(ingredient, embeddings, tokens, k=5):
 	f.close()
 
 if __name__ == "__main__":
-	# writeEmbeddingFiles([2, 5, 20])
+	pretrained = True
 
-	embeddings, tokens = loadEmbeddingFiles(input_file)#, hidden_size)
-	# targets = ["semi-sweet chocolate"]
-	# project(embeddings, tokens)
+	if not pretrained:
+		# Write ingredient vector embeddings in various dimensions, reading from input_file
+		embeddings, tokens = writeEmbeddingFiles([2, 5, 20])
+	else:
+		# Load vector embedding
+		embeddings, tokens = loadEmbeddingFiles(load_file)
+
+	# Project embeddings using t-SNE and color any ingredients containing specified string
 	highlight(embeddings, tokens, "flour")
-	# evaluate("milk", embeddings, tokens)
 
-
-	# m = 12
-	# d = 10
-	# embeddings, tokens = getTestEmbeddings(m, d)
-	# for idx in range(m):
-	# 	print "neighbor for %d:" %idx
-	# 	print getKSubstituteSuggestions(str(idx), embeddings, tokens, 1)
+	# Get best/worst substitute suggestions
+	evaluate("milk", embeddings, tokens)
+	evaluate("ginger", embeddings, tokens)
 
